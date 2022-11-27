@@ -1,0 +1,28 @@
+# dependencies
+dependencies:
+  - smartcontractkit/chainlink@1.10.0
+  - OpenZeppelin/openzeppelin-contracts@4.2.0
+
+compiler:
+  solc:
+    remappings:
+      - '@chainlink=smartcontractkit/chainlink@1.10.0'
+      - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.2.0'
+
+# networks
+networks:
+  development:
+    verify: False
+  mainnet-fork2:
+    verify: False
+  goerli:
+    LINK: '0x326C977E6efc84E512bB9C30f76E30c160eD06FB'
+    eth_usd_price_feed: '0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e'
+    
+
+# wallets
+dotenv:
+  .env
+wallets:
+  from_key: ${PRIVATE_KEY_CHROME_MM}
+  from_key_user: ${PRIVATE_KEY_USER}
