@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@chainlink/contracts/src/v0.8/Chainlink.sol";
 
 contract InsuranceProvider {
-    //ETH/USD pricefeed
+    // ETH/USD pricefeed
     AggregatorV3Interface public priceFeed;
     address public insurer = msg.sender;
 
@@ -19,7 +19,7 @@ contract InsuranceProvider {
         0x326C977E6efc84E512bB9C30f76E30c160eD06FB; //address of LINK token on Goerli
     uint256 private constant ORACLE_PAYMENT = 0.1 * 10**18; // 0.1 LINK
 
-    uint256 public constant SECOND_IN_A_DAY = 86400;
+    uint256 public constant SECOND_IN_A_DAY = 1 days;
 
     event contractCreated(
         address _insuranceContract,
@@ -93,6 +93,9 @@ contract InsuranceProvider {
         i.updateContract();
     }
 
+    /// @notice Return the current rainfall
+    /// @param _contract address of the contract
+    /// @return uint256 the current rainfall
     function getContractRainfall(address _contract)
         external
         view
@@ -102,6 +105,9 @@ contract InsuranceProvider {
         return i.currentRainfall();
     }
 
+    /// @notice Return the number of request made by the contract
+    /// @param _contract address of the contract
+    /// @return uint256 the number of request
     function getContractRequestCount(address _contract)
         external
         view
@@ -111,6 +117,8 @@ contract InsuranceProvider {
         return i.requestCount();
     }
 
+    /// @notice Return the price from the ETH/USD pricefeed
+    /// @return int256 the price of ETH/USD
     function getLatestPrice() public view returns (int256) {
         (
             uint80 roundID,

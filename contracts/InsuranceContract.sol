@@ -38,22 +38,10 @@ contract InsuranceContract is Ownable, ChainlinkClient {
 
     // #############  ORACLES  #################3
     // uint256[2] public currentRainfallList;
-    bytes32 public jobId;
+    // bytes32 public jobId;
     bytes32 public jobId_accu;
-    address public oracle;
+    // address public oracle;
     address public oracle_accu;
-
-    string constant WORLD_WEATHER_ONLINE_URL =
-        "http://api.worldweatheronline.com/premium/v1/weather.ashx?";
-    string constant WORLD_WEATHER_ONLINE_KEY = "629c6dd09bbc4364b7a33810200911";
-    string constant WORLD_WEATHER_ONLINE_PATH =
-        "data.current_condition.0.precipMM";
-
-    string constant ACCU_WEATHER_ONLINE_URL =
-        "http://api.worldweatheronline.com/premium/v1/weather.ashx?";
-    string constant ACCU_WEATHER_ONLINE_KEY = "629c6dd09bbc4364b7a33810200911";
-    string constant ACCU_WEATHER_ONLINE_PATH =
-        "data.current_condition.0.precipMM";
 
     // ############ EVENTS  #########################
 
@@ -154,9 +142,9 @@ contract InsuranceContract is Ownable, ChainlinkClient {
         contractActive = true;
         vineyardLocation = _vineyardLocation;
 
-        oracle = 0xCC79157eb46F5624204f47AB42b3906cAA40eaB7;
+        // oracle = 0xCC79157eb46F5624204f47AB42b3906cAA40eaB7;
         oracle_accu = 0xB9756312523826A566e222a34793E414A81c88E1;
-        jobId = "ca98366cc7314957b8c012c72f05aeeb"; // uint256
+        // jobId = "ca98366cc7314957b8c012c72f05aeeb"; // uint256
         jobId_accu = "0ef6e60880e24cb69cb99a1cad76f15a"; // bytes32
 
         emit contractCreated(insurer, client, duration, premium, payoutValue);
@@ -164,19 +152,24 @@ contract InsuranceContract is Ownable, ChainlinkClient {
 
     // ###############  FUNCTIONS  ###############################
 
+    /// @notice Update the contract
     function updateContract()
         public
         onContractActive
-        returns (bytes32 requestId)
+    // returns (bytes32 requestId)
     {
         checkEndContract();
 
         //contract may have been marked inactive above, only do request if needed
         if (contractActive) {
-            checkRainfall(oracle, jobId);
+            checkRainfall(oracle_accu, jobId_accu);
         }
     }
 
+    /// @notice Send a request to an oracle to get the rainfall
+    /// @param _oracle the address of the oracle
+    /// @param _jobId the job id
+    /// @return requestId the request id
     function checkRainfall(address _oracle, bytes32 _jobId)
         private
         onContractActive
@@ -235,6 +228,9 @@ contract InsuranceContract is Ownable, ChainlinkClient {
     //     emit dataReceived(_rainfall);
     // }
 
+    /// @notice Callback function
+    /// @param _requestId the request id
+    /// @param _currentConditionsResult the current condition
     function checkRainfallCallBack2(
         bytes32 _requestId,
         bytes memory _currentConditionsResult
@@ -271,6 +267,7 @@ contract InsuranceContract is Ownable, ChainlinkClient {
     }
 
     //TODO
+    /// @notice Pay the client
     function payOutContract() private onContractActive {
         //Transfer agreed amount to client
         client.transfer(address(this).balance);
@@ -288,6 +285,7 @@ contract InsuranceContract is Ownable, ChainlinkClient {
         contractPaid = true;
     }
 
+    /// @notice Check if the contract has expired TODO
     function checkEndContract() private onContractEnded {
         if (requestCount >= (duration / (SECONDS_IN_A_DAY) - 2)) {
             insurer.transfer(address(this).balance);
@@ -306,6 +304,8 @@ contract InsuranceContract is Ownable, ChainlinkClient {
         emit contractEnded(block.timestamp, address(this).balance);
     }
 
+    /// @notice Return the price from the ETH/USD pricefeed
+    /// @return int256 the price of ETH/USD
     function getLatestPrice() public view returns (int256) {
         (
             uint80 roundID,
