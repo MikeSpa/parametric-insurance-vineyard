@@ -5,6 +5,7 @@ Simple parametric insurance contract where users can buy insurance for their vin
 
 ## TODO
 
+- [ ] mock link and oracle for local testing
 - [ ] deploy scripts
 - [ ] simple tests
 - [ ] Automate the updateContract function

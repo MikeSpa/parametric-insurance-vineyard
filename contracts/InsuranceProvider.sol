@@ -15,11 +15,11 @@ contract InsuranceProvider {
     // mapping of each created contract: addr -> InsuranceContract
     mapping(address => InsuranceContract) public individualInsuranceContracts;
 
-    address public constant LINK_ADDRESS =
-        0x326C977E6efc84E512bB9C30f76E30c160eD06FB; //address of LINK token on Goerli
+    address public immutable LINK_ADDRESS; // =
+    //0x326C977E6efc84E512bB9C30f76E30c160eD06FB; //address of LINK token on Goerli
     uint256 private constant ORACLE_PAYMENT = 0.1 * 10**18; // 0.1 LINK
 
-    uint256 public constant SECOND_IN_A_DAY = 1 days;
+    uint256 public constant SECONDS_IN_A_DAY = 60; // testing!! TODO = 1 days;
 
     event contractCreated(
         address _insuranceContract,
@@ -27,8 +27,12 @@ contract InsuranceProvider {
         uint256 _totalCover
     );
 
-    constructor(address eth_usd_pricefeed) payable {
-        priceFeed = AggregatorV3Interface(eth_usd_pricefeed);
+    /// @notice Constructor
+    /// @param eth_usd_price_feed the eth/usd price feed address
+    /// @param linkAddress the link token
+    constructor(address eth_usd_price_feed, address linkAddress) payable {
+        priceFeed = AggregatorV3Interface(eth_usd_price_feed);
+        LINK_ADDRESS = linkAddress;
     }
 
     modifier onlyOwner() {
@@ -44,17 +48,19 @@ contract InsuranceProvider {
     /// @param _premium premium paid by the client
     /// @param _payoutValue payout amount
     /// @param _vineyardLocation The location of the vineyard
+    /// @return address the address of the newly created contract
     function newContract(
         address _client,
         uint256 _duration,
         uint256 _premium,
         uint256 _payoutValue,
-        string memory _vineyardLocation
+        string memory _vineyardLocation,
+        address ethUsdPriceFeed
     ) public payable onlyOwner returns (address) {
         require(
             _premium <= msg.value,
             "InsuranceProvider: not enough ETH sent"
-        );
+        ); //TODO
 
         //create contract, send payout amount to the new contract
         InsuranceContract i = (new InsuranceContract){
@@ -66,17 +72,18 @@ contract InsuranceProvider {
             _payoutValue,
             _vineyardLocation,
             LINK_ADDRESS,
-            ORACLE_PAYMENT
+            ORACLE_PAYMENT,
+            ethUsdPriceFeed
         );
 
         // store new contract
         individualInsuranceContracts[address(i)] = i;
 
-        //fund contract with enough LINK tokens to fulfil 2 Oracle request per day, plus a small buffer
+        //fund contract with enough LINK tokens to fulfil 1 Oracle request per day, plus a small buffer
         LinkTokenInterface link = LinkTokenInterface(LINK_ADDRESS);
         bool transfer = link.transfer(
             address(i),
-            ((_duration / (SECOND_IN_A_DAY)) + 2) * ORACLE_PAYMENT * 2
+            ((_duration / (SECONDS_IN_A_DAY)) + 2) * ORACLE_PAYMENT
         );
         require(transfer, "InsuranceProvider: Failed to send LINK");
 
@@ -130,6 +137,20 @@ contract InsuranceProvider {
         // If the round is not complete yet, timestamp is 0
         require(timeStamp > 0, "Round not complete");
         return price;
+    }
+
+    //TODO only for testing
+    //withdraw all ETH and LINK
+    function withdraw() public onlyOwner {
+        (bool sent, bytes memory data) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
+        require(sent, "Failed to send Ether");
+        LinkTokenInterface link = LinkTokenInterface(LINK_ADDRESS);
+        require(
+            link.transfer(payable(msg.sender), link.balanceOf(address(this))),
+            "Failed to send LINK"
+        );
     }
 
     receive() external payable {}

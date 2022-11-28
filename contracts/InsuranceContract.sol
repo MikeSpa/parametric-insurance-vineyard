@@ -14,7 +14,7 @@ contract InsuranceContract is Ownable, ChainlinkClient {
 
     address LINK_ADDRESS = 0x326C977E6efc84E512bB9C30f76E30c160eD06FB;
 
-    uint256 public constant SECONDS_IN_A_DAY = 1 days;
+    uint256 public constant SECONDS_IN_A_DAY = 60; // testing!! TODO = 1 days;
     uint256 public constant DROUGHT_DAYS_THRESDHOLD = 3; //Number of consecutive days without rainfall to be defined as a drought
     uint256 private oraclePaymentAmount;
 
@@ -34,10 +34,8 @@ contract InsuranceContract is Ownable, ChainlinkClient {
     uint256 public currentRainfall = 0;
     uint256 currentRainfallDateChecked = block.timestamp; //when the last rainfall check was performed
     uint256 public requestCount = 0;
-    // uint256 dataRequestsSent = 0; //variable used to determine if both requests have been sent or not
 
     // #############  ORACLES  #################3
-    // uint256[2] public currentRainfallList;
     // bytes32 public jobId;
     bytes32 public jobId_accu;
     // address public oracle;
@@ -108,6 +106,15 @@ contract InsuranceContract is Ownable, ChainlinkClient {
     }
 
     //  ############### CONSTRUCTOR  ###################
+
+    /// @notice Constructor
+    /// @param _client the address of the client
+    /// @param _duration the duration of the contract in seconds
+    /// @param _premium the premium amount in USD * 100_000_000
+    /// @param _payoutValue the payout amount in USD * 100_000_000
+    /// @param _vineyardLocation the vineyard location
+    /// @param _link the LINK address
+    /// @param _oraclePaymentAmount amount of LINK paid to the oracle (0.1 LINK)
     constructor(
         address _client,
         uint256 _duration,
@@ -115,22 +122,20 @@ contract InsuranceContract is Ownable, ChainlinkClient {
         uint256 _payoutValue,
         string memory _vineyardLocation,
         address _link,
-        uint256 _oraclePaymentAmount
+        uint256 _oraclePaymentAmount,
+        address eth_usd_price_feed
     ) payable Ownable() {
-        priceFeed = AggregatorV3Interface(
-            0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e
-        );
+        priceFeed = AggregatorV3Interface(eth_usd_price_feed);
 
         //initialize variables required for Chainlink Network interaction
         setChainlinkToken(_link);
-        oraclePaymentAmount = _oraclePaymentAmount;
 
+        oraclePaymentAmount = _oraclePaymentAmount;
         //first ensure insurer has fully funded the contract
         require(
             msg.value >= _payoutValue / uint256(getLatestPrice()),
             "Not enough funds sent to contract"
         );
-
         //now initialize values for the contract
         insurer = payable(msg.sender);
         client = payable(_client);
