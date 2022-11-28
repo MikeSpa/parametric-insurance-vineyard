@@ -1,4 +1,12 @@
-from brownie import network, accounts, config, MockV3Aggregator, Contract, MockERC20
+from brownie import (
+    network,
+    accounts,
+    config,
+    MockV3Aggregator,
+    Contract,
+    MockERC20,
+    LinkToken,
+)
 from web3 import Web3
 
 FORKED_LOCAL_ENVIRNOMENT = ["mainnet-fork", "mainnet-fork2"]
@@ -41,7 +49,7 @@ def get_verify_status():
 
 contract_to_mock = {
     "eth_usd_price_feed": MockV3Aggregator,
-    "LINK": MockERC20,
+    "LINK": LinkToken,
 }
 
 
@@ -86,7 +94,7 @@ def deploy_mocks():
     )
     print(f"MockV3Aggregator deployed to {mock_price_feed}")
 
-    mock_link_token = MockERC20.deploy({"from": account})
+    mock_link_token = LinkToken.deploy({"from": account})
     print(f"MockLINK deployed to {mock_link_token.address}")
 
 
